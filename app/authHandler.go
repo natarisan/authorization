@@ -8,37 +8,36 @@ import(
 	"net/http"
 )
 
-//このstructはサービスを持つ。認証サービス。
 type AuthHandler struct {
 	service service.AuthService
 }
 
 //ログインハンドラー レスポンスを返す。 リクエストの中に認証情報が含まれている。こいつはサービスを呼び出す。dtoのログインリクエストを投げる。
 func(h AuthHandler) Login(w http.ResponseWriter, r *http.Request){
-	var loginRequest dto.LoginRequest //dtoリクエスト
-	if err := json.NewDecoder(r.Body).Decode(&loginRequest); err != nil{//リクエストボディをdtoのリクエストに変換
+	var loginRequest dto.LoginRequest 
+	if err := json.NewDecoder(r.Body).Decode(&loginRequest); err != nil {
 		logger.Error("リクエストをデコードする際にエラーが発生しました。(handler)")
-		w.WriteHeader(http.StatusBadRequest)//ヘッダーにバッドリクエストステータスを付与して返す
+		w.WriteHeader(http.StatusBadRequest)
 	} else {
-		token, appErr := h.service.Login(loginRequest) //ちゃんとリクエストをdtoに変換できたら、認証サービスを呼び出す。
-		if appErr != nil{ //dtoを認証サービスに投げてエラーが出たら
-			writeResponse(w, appErr.Code, appErr.AsMessage())//エラーコードとメッセージを返す
+		token, appErr := h.service.Login(loginRequest) 
+		if appErr != nil { 
+			writeResponse(w, appErr.Code, appErr.AsMessage())
 		} else {
-			writeResponse(w, http.StatusOK, *token)//OKステータスとトークンへの参照を返す
+			writeResponse(w, http.StatusOK, *token)
 		}
 	}
 }
 
 //リクエストしてきた人が有効なトークンを持っているか？をリクエストのたびに判定する。トークンをクエリパラメータの中に入れておく。
-func(h AuthHandler) Verify(w http.ResponseWriter, r *http.Request){
-	urlParams := make(map[string]string)//パラメータを格納するマップを作成
+func(h AuthHandler) Verify(w http.ResponseWriter, r *http.Request) {
+	urlParams := make(map[string]string)
 
-	for k := range r.URL.Query(){//キー一覧をURLから取得
-		urlParams[k] = r.URL.Query().Get(k)//キーに対応する値を取り出して生成したマップに入れていく
+	for k := range r.URL.Query() {
+		urlParams[k] = r.URL.Query().Get(k)
 	}
 
 	if urlParams["token"] != "" {
-		appErr := h.service.Verify(urlParams) //トークン確認サービスを呼び出す。そこにurlParams（クエリの一覧）を送る。
+		appErr := h.service.Verify(urlParams) 
 		if appErr != nil {
 			writeResponse(w, appErr.Code, notAuthorizedResponse(appErr.Message))
 		} else {
@@ -46,6 +45,21 @@ func(h AuthHandler) Verify(w http.ResponseWriter, r *http.Request){
 		}
 	} else {
 		writeResponse(w, http.StatusForbidden, notAuthorizedResponse("トークンがないよ"))
+	}
+}
+
+func(h AuthHandler) Refresh(w http.ResponseWriter, r *http.Request){
+	var refreshRequest dto.RefreshTokenRequest
+	if err := json.NewDecoder(r.Body).Decode(&refreshRequest); err != nil{
+		logger.Error("リフレッシュトークンリクエストをデコードしている最中にエラーが発生しました")
+		w.WriteHeader(http.StatusBadRequest)
+	} else {
+		token, appErr := h.service.Refresh(refreshRequest)
+		if appErr != nil {
+			writeResponse(w, appErr.Code, appErr.AsMessage())
+		} else {
+			writeResponse(w, http.StatusOK, *token)
+		}
 	}
 }
 
@@ -57,14 +71,12 @@ func notAuthorizedResponse(msg string) map[string]interface{} {
 	}
 }
 
-//これはmapの項目が１個だけなので、boolean型を返す。
 func authorizedResponse() map[string]bool {
 	return map[string]bool{
 		"isAuthorized": true,
 	}
 }
 
-//レスポンスを加工する。ヘッダーをつけてステータスコードもつける dataをjsonエンコードする　レスポンス、ステータスコード、データ（なんでもいい）を引数とする。
 func writeResponse(w http.ResponseWriter, code int, data interface{}){
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(code)

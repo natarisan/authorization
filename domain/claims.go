@@ -6,21 +6,35 @@ import(
 )
 
 const HMAC_SAMPLE_SECRET = "hmacsamplesecret"
-const ACCESS_TOKEN_DURATION = time.Hour //1時間やな
+const ACCESS_TOKEN_DURATION = time.Hour 
+const REFRESH_TOKEN_DURATION = time.Hour * 24 * 30
 
 type AccessTokenClaims struct {
-	CustomerId string `json:"customer_id"`
+	CustomerId string   `json:"customer_id"`
 	Accounts   []string `json:"accounts"`
-	Username   string `json:"username"`
-	Role       string `json:"role"`
+	Username   string   `json:"username"`
+	Role       string   `json:"role"`
 	jwt.StandardClaims
 }
 
-//ロールがユーザか管理者か？トークンの中に入っているものを確かめる
+type RefreshTokenClaims struct {
+	TokenType  string   `json:"token_type"`
+	CustomerId string   `json:"cid"`
+	Accounts   []string `json:"accounts"`
+	Username   string   `json:"un"`
+	Role       string   `json:"role"`
+	jwt.StandardClaims
+} 
+
 func(c AccessTokenClaims) IsUserRole() bool {
 	return c.Role == "user"
 }
-//アカウントIDがちゃんとしてる？トークンの中の情報を解読している。アカウントIDとトークンの中に入っているアカウントIDが一致することを確かめる
+
+func (c AccessTokenClaims) IsValidCustomerId(customerId string) bool {
+	return c.CustomerId == customerId
+}
+
+
 func(c AccessTokenClaims) IsValidAccountId(accountId string) bool {
 	if accountId != "" {
 		accountFound := false
@@ -35,7 +49,6 @@ func(c AccessTokenClaims) IsValidAccountId(accountId string) bool {
 	return true
 }
 
-//アカウントIDとカスタマーIDがちゃんとしてる？トークンの中の情報とURLパラメータの中の情報が一致することを確かめる。
 func(c AccessTokenClaims) IsRequestVerifiedWithTokenClaims(urlParams map[string]string) bool {
 	if c.CustomerId != urlParams["customer_id"] {
 		return false
@@ -44,4 +57,29 @@ func(c AccessTokenClaims) IsRequestVerifiedWithTokenClaims(urlParams map[string]
 		return false
 	}
 	return true
+}
+
+func (c AccessTokenClaims) RefreshTokenClaims() RefreshTokenClaims {
+	return RefreshTokenClaims{
+		TokenType:  "refresh_token",
+		CustomerId: c.CustomerId,
+		Accounts:   c.Accounts,
+		Username:   c.Username,
+		Role:       c.Role,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(REFRESH_TOKEN_DURATION).Unix(),
+		},
+	}
+}
+
+func (c RefreshTokenClaims) AccessTokenClaims() AccessTokenClaims {
+	return AccessTokenClaims{
+		CustomerId: c.CustomerId,
+		Accounts:   c.Accounts,
+		Username:   c.Username,
+		Role:       c.Role,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(ACCESS_TOKEN_DURATION).Unix(),
+		},
+	}
 }
