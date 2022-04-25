@@ -9,30 +9,47 @@ import(
 	"github.com/dgrijalva/jwt-go"
 )
 
-//このサービスは３つのメソッドを実装する。
 type AuthService interface {
-	Login(dto.LoginRequest) (*dto.LoginResponse, *errs.AppError) //dtoのリクエストを受け取って、dtoのレスポンスとエラーを返す。
-	Verify(urlParams map[string]string) *errs.AppError           //リクエストパラメータ一覧が入ったマップを受け取って、エラーを返す。
+	Login(dto.LoginRequest) (*dto.LoginResponse, *errs.AppError) 
+	Verify(urlParams map[string]string) *errs.AppError          
+	Refresh(request dto.RefreshTokenRequest)(*dto.LoginResponse, *errs.AppError)
 }
 
-//このサービスは2つのドメイン層(リポジトリ)を持つ また、インターフェースの３つのメソッドを実装する。
 type DefaultAuthService struct {
-	repo              domain.AuthRepository //ログイン認証ドメイン
-	rolePermissions   domain.RolePermissions //トークンの有効性確認ドメイン
+	repo              domain.AuthRepository 
+	rolePermissions   domain.RolePermissions 
+}
+
+func(s DefaultAuthService) Refresh(request dto.RefreshTokenRequest)(*dto.LoginResponse, *errs.AppError){
+	if vErr := request.IsAccessTokenValid(); vErr != nil {
+		if vErr.Errors == jwt.ValidationErrorExpired {
+			var appErr *errs.AppError
+			if appErr = s.repo.RefreshTokenExists(request.RefreshToken); appErr != nil {
+				return nil, appErr
+			}
+			var accessToken string
+			if accessToken, appErr = domain.NewAccessTokenFromRefreshToken(request.RefreshToken); appErr != nil {
+				return nil, appErr
+			}
+			return &dto.LoginResponse{AccessToken: accessToken}, nil
+		}
+		return nil, errs.NewAuthenticationError("無効なトークン")
+	}
+	return nil, errs.NewAuthenticationError("有効期限が切れるまで新しいリフレッシュトークンを作成することはできません")
 }
 
 func(s DefaultAuthService) Login(req dto.LoginRequest) (*dto.LoginResponse, *errs.AppError){
 	var appErr *errs.AppError
-	var login  *domain.Login //domain層のログイン構造体への参照
+	var login  *domain.Login
 
 	if login, appErr = s.repo.FindBy(req.Username, req.Password); appErr != nil {
 		return nil, appErr
 	}
 	
-	claims := login.ClaimsForAccessToken() //login構造体がメソッドを持ちます
-	authToken := domain.NewAuthToken(claims) //token(Auth)構造体を生成します
+	claims := login.ClaimsForAccessToken() 
+	authToken := domain.NewAuthToken(claims)
 
-	var accessToken string//authTokenから実際のアクセストークンを生成します
+	var accessToken string
 	if accessToken, appErr = authToken.NewAccessToken(); appErr != nil{
 		return nil, appErr
 	}
@@ -42,14 +59,11 @@ func(s DefaultAuthService) Login(req dto.LoginRequest) (*dto.LoginResponse, *err
 	}, nil
 }
 
-//tokenの有効性を確認するサービスメソッド
 func(s DefaultAuthService) Verify(urlParams map[string]string) *errs.AppError {
-	//まず、文字列のJWTtokenをJWTの構造体に変換する。
 	if jwtToken, err := jwtTokenFromString(urlParams["token"]); err != nil {
 		return errs.NewAuthorizationError(err.Error())
 	} else {
 		if jwtToken.Valid {
-			//型キャスト
 			claims := jwtToken.Claims.(*domain.AccessTokenClaims)
 			if claims.IsUserRole() {
 				if !claims.IsRequestVerifiedWithTokenClaims(urlParams) {
@@ -68,7 +82,6 @@ func(s DefaultAuthService) Verify(urlParams map[string]string) *errs.AppError {
 }
 
 func jwtTokenFromString(tokenString string) (*jwt.Token, error){
-	//文字列からjwt型へトークンをパースする
 	token, err := jwt.ParseWithClaims(tokenString, &domain.AccessTokenClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(domain.HMAC_SAMPLE_SECRET), nil
 	})

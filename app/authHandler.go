@@ -12,7 +12,10 @@ type AuthHandler struct {
 	service service.AuthService
 }
 
-//ログインハンドラー レスポンスを返す。 リクエストの中に認証情報が含まれている。こいつはサービスを呼び出す。dtoのログインリクエストを投げる。
+func(h AuthHandler) NotImplementedHandler(w http.ResponseWriter, r *http.Request){
+	writeResponse(w, http.StatusOK, "実装中")
+}
+
 func(h AuthHandler) Login(w http.ResponseWriter, r *http.Request){
 	var loginRequest dto.LoginRequest 
 	if err := json.NewDecoder(r.Body).Decode(&loginRequest); err != nil {
@@ -28,7 +31,6 @@ func(h AuthHandler) Login(w http.ResponseWriter, r *http.Request){
 	}
 }
 
-//リクエストしてきた人が有効なトークンを持っているか？をリクエストのたびに判定する。トークンをクエリパラメータの中に入れておく。
 func(h AuthHandler) Verify(w http.ResponseWriter, r *http.Request) {
 	urlParams := make(map[string]string)
 

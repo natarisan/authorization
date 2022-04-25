@@ -20,7 +20,7 @@ func(t AuthToken) NewAccessToken()(string, *errs.AppError) {
 }
 
 func(t AuthToken) NewRefreshToken() (string, *errs.AppError){
-	c := t.token.Claims(AccessTokenClaims)
+	c := t.token.Claims.(AccessTokenClaims)
 	refreshClaims := c.RefreshTokenClaims()
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims)
 	signedString, err := token.SignedString([]byte(HMAC_SAMPLE_SECRET))

@@ -2,11 +2,11 @@ package dto
 
 import(
 	"errors"
-	"auth/domain"
+	"AUTH/domain"
 	"github.com/dgrijalva/jwt-go"
 )
 
-type RefreshToken struct {
+type RefreshTokenRequest struct {
 	AccessToken   string `json:"access_token"`
 	RefreshToken  string `json:"refresh_token"`
 }

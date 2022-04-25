@@ -2,7 +2,6 @@ package domain
 
 import "strings"
 
-//権限一覧　一つのキーにつき権限一覧のスライスが入る
 type RolePermissions struct {
 	rolePermissions map[string][]string
 }
