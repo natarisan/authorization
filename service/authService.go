@@ -49,13 +49,18 @@ func(s DefaultAuthService) Login(req dto.LoginRequest) (*dto.LoginResponse, *err
 	claims := login.ClaimsForAccessToken() 
 	authToken := domain.NewAuthToken(claims)
 
-	var accessToken string
+	var accessToken, refreshToken string
 	if accessToken, appErr = authToken.NewAccessToken(); appErr != nil{
+		return nil, appErr
+	}
+
+	if refreshToken, appErr = s.repo.GenerateAndSaveRefreshTokenToStore(authToken); appErr != nil {
 		return nil, appErr
 	}
 
 	return &dto.LoginResponse{
 		AccessToken: accessToken,
+		RefreshToken: refreshToken,
 	}, nil
 }
 

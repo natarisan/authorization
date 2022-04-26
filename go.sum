@@ -19,6 +19,10 @@ github.com/natarisan/gop-libs v1.0.2 h1:4Q4rGu5d22Mjo3RoZpiCwCSggLgGN0fWbfclaocM
 github.com/natarisan/gop-libs v1.0.2/go.mod h1:SFsiBoprL3wXB64VTkR5ORmpjoCKoPOKeWUMx0a74xs=
 github.com/natarisan/gop-libs v1.0.3 h1:0mRiuGtXd7E9tkb6nWh0DPUeKBxP2+C8ejSAcP9n490=
 github.com/natarisan/gop-libs v1.0.3/go.mod h1:SFsiBoprL3wXB64VTkR5ORmpjoCKoPOKeWUMx0a74xs=
+github.com/natarisan/gop-libs v1.0.5 h1:3zOgq8BUh4jPOYz5ZPdpjR4XwMVFfCEX4B7ujGXs4K0=
+github.com/natarisan/gop-libs v1.0.5/go.mod h1:SFsiBoprL3wXB64VTkR5ORmpjoCKoPOKeWUMx0a74xs=
+github.com/natarisan/gop-libs v1.0.6 h1:oDSmLD9B6IKinP3WT2DiJhpSiU7k8QTFSYrOJs9jZoc=
+github.com/natarisan/gop-libs v1.0.6/go.mod h1:SFsiBoprL3wXB64VTkR5ORmpjoCKoPOKeWUMx0a74xs=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=

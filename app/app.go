@@ -60,7 +60,7 @@ func sanityCheck(){
 
 	for _, k := range envProps {
 		if os.Getenv(k) == "" {
-			logger.Error("おいおい、環境変数をちゃんと設定しろって。まったくもう。")
+			logger.Error("環境変数を設定してください。")
 		}
 	}
 }
