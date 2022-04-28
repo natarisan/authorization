@@ -31,7 +31,7 @@ func(h AuthHandler) Login(w http.ResponseWriter, r *http.Request){
 	}
 }
 
-func(h AuthHandler) Verify(w http.ResponseWriter, r *http.Request) {
+func (h AuthHandler) Verify(w http.ResponseWriter, r *http.Request) {
 	urlParams := make(map[string]string)
 
 	for k := range r.URL.Query() {
@@ -39,14 +39,14 @@ func(h AuthHandler) Verify(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if urlParams["token"] != "" {
-		appErr := h.service.Verify(urlParams) 
+		appErr := h.service.Verify(urlParams)
 		if appErr != nil {
 			writeResponse(w, appErr.Code, notAuthorizedResponse(appErr.Message))
 		} else {
 			writeResponse(w, http.StatusOK, authorizedResponse())
 		}
 	} else {
-		writeResponse(w, http.StatusForbidden, notAuthorizedResponse("トークンがないよ"))
+		writeResponse(w, http.StatusForbidden, notAuthorizedResponse("missing token"))
 	}
 }
 
@@ -68,15 +68,13 @@ func(h AuthHandler) Refresh(w http.ResponseWriter, r *http.Request){
 //トークンが無効なときのレスポンスをマップで返す
 func notAuthorizedResponse(msg string) map[string]interface{} {
 	return map[string]interface{}{
-		"isAuthorized": false,
+		"IsAuthorized": false,
 		"message":      msg,
 	}
 }
 
 func authorizedResponse() map[string]bool {
-	return map[string]bool{
-		"isAuthorized": true,
-	}
+	return map[string]bool{"IsAuthorized": true}
 }
 
 func writeResponse(w http.ResponseWriter, code int, data interface{}){
