@@ -8,7 +8,8 @@ import(
 )
 
 type AuthRepository interface {
-	FindBy(username string, password string)(*Login, *errs.AppError) //ユーザネームとパスワードをもとにそのユーザがいるかどうか
+	Register(username string, password string) *errs.AppError
+	FindBy(username string, password string)(*Login, *errs.AppError) 
 	GenerateAndSaveRefreshTokenToStore(authToken AuthToken)(string, *errs.AppError)
 	RefreshTokenExists(refreshToken string) *errs.AppError
 }
@@ -60,10 +61,9 @@ func(d AuthRepositoryDb) FindBy(username, password string) (*Login, *errs.AppErr
 		logger.Error("データベースエラー" + err0.Error())
 		return nil, errs.NewUnexpectedError("予期せぬデータベースエラー")
 	}
-	//sqlを発動してデータをゲットします
+
 	err := d.client.Get(&login, sqlVerify, username, password)
 	if err != nil {
-		//該当行が見つからなかった場合
 		if err == sql.ErrNoRows {
 			return nil, errs.NewAuthenticationError("無効な認証情報です。")
 		} else {
@@ -74,7 +74,22 @@ func(d AuthRepositoryDb) FindBy(username, password string) (*Login, *errs.AppErr
 	return &login, nil
 }
 
-//sqlクライアントをnewする
+func(d AuthRepositoryDb) Register(username, password string) *errs.AppError {
+	var customerId int
+	getCustomerIdSql := `SELECT MAX(customer_id) FROM users`
+	row := d.client.QueryRow(getCustomerIdSql)
+	row.Scan(&customerId)
+	customerId = customerId + 1
+
+    sqlInsert := `INSERT INTO users(username, password, role, customer_id) VALUES(?,?,"user",?)`
+	_, err := d.client.Exec(sqlInsert, username, password, customerId)
+	if err != nil {
+		logger.Error("登録時、データベースでエラーが発生しました。" + err.Error())
+		return errs.NewUnexpectedError("予期せぬデータベースエラー")
+	}
+	return nil
+}
+
 func NewAuthRepository(client *sqlx.DB) AuthRepositoryDb {
 	return AuthRepositoryDb{
 		client,

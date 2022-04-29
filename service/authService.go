@@ -10,6 +10,7 @@ import(
 )
 
 type AuthService interface {
+	Register(dto.RegisterRequest) *errs.AppError
 	Login(dto.LoginRequest) (*dto.LoginResponse, *errs.AppError) 
 	Verify(urlParams map[string]string) *errs.AppError          
 	Refresh(request dto.RefreshTokenRequest)(*dto.LoginResponse, *errs.AppError)
@@ -18,6 +19,14 @@ type AuthService interface {
 type DefaultAuthService struct {
 	repo              domain.AuthRepository 
 	rolePermissions   domain.RolePermissions 
+}
+
+func(s DefaultAuthService) Register(req dto.RegisterRequest) *errs.AppError {
+	var appErr *errs.AppError
+	if appErr = s.repo.Register(req.Username, req.Password); appErr != nil {
+		return appErr
+	}
+	return nil
 }
 
 func(s DefaultAuthService) Refresh(request dto.RefreshTokenRequest)(*dto.LoginResponse, *errs.AppError){

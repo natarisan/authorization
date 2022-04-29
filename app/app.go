@@ -20,7 +20,7 @@ func Start(){
 	authRepository := domain.NewAuthRepository(getDbClient()) 
 	ah := AuthHandler{service.NewLoginService(authRepository, domain.GetRolePermissions())} 
 	router.HandleFunc("/auth/login", ah.Login).Methods(http.MethodPost) 
-	router.HandleFunc("/auth/register", ah.NotImplementedHandler).Methods(http.MethodPost)
+	router.HandleFunc("/auth/register", ah.Register).Methods(http.MethodPost)
 	router.HandleFunc("/auth/verify", ah.Verify).Methods(http.MethodGet) 
 	router.HandleFunc("/auth/refresh", ah.Refresh).Methods(http.MethodGet)
 	address := os.Getenv("SERVER_ADDRESS")

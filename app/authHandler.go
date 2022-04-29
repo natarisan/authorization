@@ -12,14 +12,33 @@ type AuthHandler struct {
 	service service.AuthService
 }
 
-func(h AuthHandler) NotImplementedHandler(w http.ResponseWriter, r *http.Request){
-	writeResponse(w, http.StatusOK, "実装中")
+func(h AuthHandler) Register(w http.ResponseWriter, r *http.Request){
+	var registerRequest dto.RegisterRequest
+	var loginRequest dto.LoginRequest
+	if err := json.NewDecoder(r.Body).Decode(&registerRequest); err != nil{
+		logger.Error("リクエストをデコードする際にエラーが発生しました。" + err.Error())
+		w.WriteHeader(http.StatusBadRequest)
+	} else {
+		loginRequest.Username = registerRequest.Username
+		loginRequest.Password = registerRequest.Password
+		appErr := h.service.Register(registerRequest)
+		if appErr != nil {
+			writeResponse(w, appErr.Code, appErr.AsMessage())
+		} else {
+			token, appErr2 := h.service.Login(loginRequest) 
+		    if appErr2 != nil { 
+			writeResponse(w, appErr.Code, appErr.AsMessage())
+		    } else {
+			writeResponse(w, http.StatusOK, *token)
+		    }
+		}
+	}
 }
 
 func(h AuthHandler) Login(w http.ResponseWriter, r *http.Request){
 	var loginRequest dto.LoginRequest 
 	if err := json.NewDecoder(r.Body).Decode(&loginRequest); err != nil {
-		logger.Error("リクエストをデコードする際にエラーが発生しました。(handler)")
+		logger.Error("リクエストをデコードする際にエラーが発生しました。" + err.Error())
 		w.WriteHeader(http.StatusBadRequest)
 	} else {
 		token, appErr := h.service.Login(loginRequest) 
