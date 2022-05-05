@@ -15,6 +15,10 @@ type AuthHandler struct {
 func(h AuthHandler) Register(w http.ResponseWriter, r *http.Request){
 	var registerRequest dto.RegisterRequest
 	var loginRequest dto.LoginRequest
+	if r.Method == "OPTIONS" {
+		writeResponse(w, http.StatusOK, "")
+		return
+	}
 	if err := json.NewDecoder(r.Body).Decode(&registerRequest); err != nil{
 		logger.Error("リクエストをデコードする際にエラーが発生しました。" + err.Error())
 		w.WriteHeader(http.StatusBadRequest)
@@ -37,6 +41,10 @@ func(h AuthHandler) Register(w http.ResponseWriter, r *http.Request){
 
 func(h AuthHandler) Login(w http.ResponseWriter, r *http.Request){
 	var loginRequest dto.LoginRequest 
+	if r.Method == "OPTIONS" {
+		writeResponse(w, http.StatusOK, "")
+		return
+	}
 	if err := json.NewDecoder(r.Body).Decode(&loginRequest); err != nil {
 		logger.Error("リクエストをデコードする際にエラーが発生しました。" + err.Error())
 		w.WriteHeader(http.StatusBadRequest)
@@ -85,19 +93,19 @@ func(h AuthHandler) Refresh(w http.ResponseWriter, r *http.Request){
 }
 
 //トークンが無効なときのレスポンスをマップで返す
-func notAuthorizedResponse(msg string) map[string]interface{} {
-	return map[string]interface{}{
-		"IsAuthorized": false,
-		"message":      msg,
-	}
+func notAuthorizedResponse(msg string) map[int]bool {
+	return map[int]bool{1000: false}
 }
 
-func authorizedResponse() map[string]bool {
-	return map[string]bool{"IsAuthorized": true}
+func authorizedResponse() map[int]bool {
+	return map[int]bool{1000: true}
 }
 
 func writeResponse(w http.ResponseWriter, code int, data interface{}){
 	w.Header().Add("Content-Type", "application/json")
+	w.Header().Add("Access-Control-Allow-Origin", "*")
+	w.Header().Add("Access-Control-Allow-Headers", "*")
+	w.Header().Add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 	w.WriteHeader(code)
 	if err := json.NewEncoder(w).Encode(data); err != nil {
 		panic(err)
