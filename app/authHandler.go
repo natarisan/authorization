@@ -93,8 +93,11 @@ func(h AuthHandler) Refresh(w http.ResponseWriter, r *http.Request){
 }
 
 //トークンが無効なときのレスポンスをマップで返す
-func notAuthorizedResponse(msg string) map[int]bool {
-	return map[int]bool{1000: false}
+func notAuthorizedResponse(msg string) map[int]interface{} {
+	return map[int]interface{}{
+		1000: false,
+		1001: msg,
+	}
 }
 
 func authorizedResponse() map[int]bool {
